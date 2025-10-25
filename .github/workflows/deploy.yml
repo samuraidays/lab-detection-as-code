@@ -1,0 +1,36 @@
+name: Deploy Rules to Elastic Security
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "rules/**.yml"
+      - "config/**.yaml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install sigma-cli
+        run: |
+          pip install sigma-cli
+          sigma plugin install elasticsearch
+      - name: Convert Sigma to NDJSON
+        run: |
+          mkdir -p dist
+          sigma convert -t lucene --pipeline ecs_windows --format siem_rule_ndjson rules -o dist/detections.ndjson
+      - name: Deploy to Kibana Detection Engine
+        env:
+          KIBANA_URL: ${{ secrets.KIBANA_URL }}
+          KIBANA_API_KEY: ${{ secrets.KIBANA_API_KEY }}
+        run: |
+          curl -sS -X POST "${KIBANA_URL}/api/detection_engine/rules/_import?overwrite=true" \
+            -H "kbn-xsrf: true" \
+            -H "Authorization: ApiKey ${KIBANA_API_KEY}" \
+            -F "file=@dist/detections.ndjson"

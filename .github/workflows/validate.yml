@@ -1,0 +1,27 @@
+name: Validate Sigma Rules
+
+on:
+  pull_request:
+    paths:
+      - 'rules/**.yml'
+      - 'config/**.yaml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install sigma-cli
+        run: |
+          pip install sigma-cli
+          sigma plugin install elasticsearch
+      - name: Validate Rules
+        run: sigma validate rules
+      - name: Dry Run Convert
+        run: |
+          mkdir -p dist
+          sigma convert -t lucene --pipeline ecs_windows --format siem_rule_ndjson rules -o dist/detections.ndjson

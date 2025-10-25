@@ -1,0 +1,22 @@
+title: Suspicious PowerShell EncodedCommand
+id: 9f4d8e4e-5bcd-4a74-8d38-8d5c6d84c5c1
+status: experimental
+description: Detects PowerShell usage with Base64 encoded commands
+author: 12ban
+date: 2025/10/25
+logsource:
+  product: windows
+  category: process_creation
+detection:
+  selection:
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains: 'EncodedCommand'
+  condition: selection
+fields:
+  - Image
+  - CommandLine
+falsepositives:
+  - legitimate administration scripts
+level: medium
+tags:
+  - attack.t1059.001
