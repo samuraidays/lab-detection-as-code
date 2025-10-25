@@ -25,7 +25,6 @@ jobs:
         run: |
           mkdir -p dist
           sigma convert -t lucene --pipeline ecs_windows --format siem_rule_ndjson rules -o dist/detections.ndjson
-          sed -i 's/"name":"SIGMA - /"name":"/g' dist/detections.ndjson
       - name: Deploy to Kibana Detection Engine
         env:
           KIBANA_URL: ${{ secrets.KIBANA_URL }}
