@@ -1,0 +1,55 @@
+title: Entry - User Apps Spawning PowerShell or LOLBins
+id: 7d66b8b7-5f9a-4e9a-8a2e-2a2a1b3f1c9d
+status: experimental
+description: Detects user-facing apps (Chrome/Edge/Office/Explorer) spawning PowerShell or LOLBins (Gmail/Drive 起点を想定)
+author: your-name
+date: 2025/11/08
+references: []
+logsource:
+  product: windows
+  category: process_creation     # Sysmon(EID1) / Security(4688) いずれにも対応
+detection:
+  parent_apps:
+    ParentImage|endswith:
+      - '\chrome.exe'
+      - '\msedge.exe'
+      - '\EXPLORER.EXE'
+      - '\WINWORD.EXE'
+      - '\EXCEL.EXE'
+      - '\POWERPNT.EXE'
+      - '\ONENOTE.EXE'
+  lolbins:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+      - '\mshta.exe'
+      - '\rundll32.exe'
+      - '\regsvr32.exe'
+  # --- 任意の除外（必要時のみ有効化）---
+  # filter_admin_hosts:
+  #   host.tags:
+  #     - "jump"
+  #     - "ops"
+  # filter_admin_role:
+  #   asset.role: "admin"
+  # filter_corp_signed:
+  #   file.code_signature.trusted: true
+  #   file.code_signature.subject_name: "YourCorp Ltd."
+  condition: parent_apps and lolbins
+  # condition: parent_apps and lolbins and not 1 of filter_admin_hosts and not 1 of filter_admin_role and not filter_corp_signed
+fields:
+  - Image
+  - ParentImage
+  - CommandLine
+  - ParentCommandLine
+  - User
+  - Computer
+falsepositives:
+  - Admin/jump hosts
+  - Legit automation from signed corporate tools
+level: medium
+tags:
+  - attack.t1204
+  - attack.initial_access
